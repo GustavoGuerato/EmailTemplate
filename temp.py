@@ -1,21 +1,31 @@
 from string import Template
 from datetime import datetime
-import os
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+from dados_email import meu_email, minha_senha
+import smtplib
 
-try:
+with open('email.html', 'r') as html:
+    template = Template(html.read())
+    data_atual = datetime.now().strftime('%d/%m/%Y')
+    corpo_msg = template.substitute(nome='Gustavo Guerato', data=data_atual)
 
-    diretorio_script = os.path.dirname(os.path.realpath(__file__))
+msg = MIMEMultipart()
+msg['from'] = 'Gustavo Guerato'
+msg['to'] = 'guerato.gustavo@gmail.com'
+msg['subject'] = 'example text'
 
-    caminho_template = os.path.join(diretorio_script, 'email.html')
+corpo = MIMEText(corpo_msg, 'html')
+msg.attach(corpo)
 
-    if not os.path.exists(caminho_template):
-        raise FileNotFoundError(f"Erro: O arquivo 'email.html' não foi encontrado em '{diretorio_script}'")
+with open('imagem.jpg', 'rb') as img:
+    img = MIMEImage(img.read())
+    msg.attach(img)
 
-    with open(caminho_template, 'r') as html:
-        template = Template(html.read())
-        data_atual = datetime.now().strftime('%d/%m/%Y')
-        corpo_msg = template.substitute(nome='Gustavo Guerato', data=data_atual)
-        print("Mensagem gerada com sucesso:", corpo_msg)
-
-except Exception as e:
-    print(f"Ocorreu um erro: {e}")
+with smtplib.SMTP(host='smtp.gmail.com', port=587) as smtp:
+    smtp.ehlo()
+    smtp.starttls()
+    smtp.login(meu_email, minha_senha)
+    smtp.send_message(msg)
+    print('Email enviado com sucesso')
